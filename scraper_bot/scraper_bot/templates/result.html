@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Complete</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="flex flex-col items-center justify-center h-screen bg-black text-green-500">
+
+    <h1 class="text-4xl mb-5">Sites successfully gathered!</h1>
+    <div class="flex space-x-4">
+        <a href="/download/{{ file }}" class="p-2 bg-green-500 text-black hover:bg-green-400">Download File</a>
+        
+        <!-- Updated 'View File' button to open the file in a new tab -->
+        <a href="/view/{{ file }}" target="_blank" class="p-2 bg-green-500 text-black hover:bg-green-400">View File</a>
+    </div>
+
+</body>
+</html>
