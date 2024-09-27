@@ -1,0 +1,67 @@
+<!-- File: templates/result.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Complete</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="flex flex-col items-center justify-center h-screen bg-black text-green-500"
+  >
+    <h1 class="text-4xl mb-5">Sites successfully gathered!</h1>
+    <p class="mb-5">Number of results fetched: {{ total_results }}</p>
+
+    <div class="flex space-x-4">
+      <a
+        href="/download/{{ file }}"
+        class="p-2 bg-green-500 text-black hover:bg-green-400"
+        >Download File</a
+      >
+      <a
+        href="{{ file }}"
+        target="_blank"
+        class="p-2 bg-green-500 text-black hover:bg-green-400"
+        >View File</a
+      >
+    </div>
+
+    <table class="mt-5 bg-gray-900 w-3/4 text-left">
+      <thead class="bg-green-500">
+        <tr>
+          <th class="p-3">Title</th>
+          <th class="p-3">URL</th>
+          <th class="p-3">Description</th>
+          <th class="p-3">Keywords</th>
+          <th class="p-3">Tags</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        {% for result in results %}
+        <tr>
+          <td class="p-3">{{ result.title }}</td>
+          <td class="p-3">
+            <a
+              href="{{ result.link }}"
+              target="_blank"
+              class="text-green-500 hover:underline"
+              >{{ result.link }}</a
+            >
+          </td>
+          <td class="p-3">{{ result.snippet }}</td>
+          <td class="p-3">{{ result.keywords }}</td>
+          <td class="p-3">{{ result.tags }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="text-center p-3">No results found</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

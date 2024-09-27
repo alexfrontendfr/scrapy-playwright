@@ -1,0 +1,8 @@
+#!C:\Users\razva\Desktop\all-no-play\PromptEngineerPrjcts\scrapper\scrapy_playwright_final_bugfix\final_updated_scrapy_playwright_project\scrapy-playwright\scraper_bot\scraper_bot\venv\Scripts\python.exe
+# Copyright 2014-2017, Damian Johnson and The Tor Project
+# See LICENSE for licensing information
+
+import stem.interpreter
+
+if __name__ == '__main__':
+  stem.interpreter.main()

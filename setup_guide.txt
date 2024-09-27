@@ -1,0 +1,57 @@
+# Setup Guide for Scrapy Playwright Web Scraper
+
+This guide will walk you through the process of setting up the Scrapy Playwright Web Scraper project on your local machine.
+
+## Prerequisites
+
+- Python 3.7 or higher
+- pip (Python package installer)
+- Git
+
+## Installation Steps
+
+1. Clone the repository:
+git clone https://github.com/alexfrontendfr/web-scraper.git
+cd web-scraper
+
+2. Create and activate a virtual environment:
+
+For Windows:
+python -m venv venv
+venv\Scripts\activate
+
+For macOS and Linux:
+python3 -m venv venv
+source venv/bin/activate
+
+
+3. Upgrade pip and install wheel:
+pip install --upgrade pip
+pip install wheel
+
+4. Install the required dependencies:
+pip install scrapy==2.5.1 Flask==2.0.1 scrapy-playwright==0.0.14 playwright==1.12.0 scrapy-user-agents==0.1.1 requests==2.26.0 stem==1.8.0
+
+5. Install Playwright browsers:
+playwright install
+
+6. Install Tor (for .onion scraping):
+- Windows: Download and install the Tor Browser from https://www.torproject.org/download/
+- macOS: `brew install tor`
+- Linux: `sudo apt install tor`
+
+## Running the Scraper
+
+1. Activate your virtual environment (if it's not already activated).
+2. Navigate to the project root directory.
+3. Run the Flask application: cd scraper_bot/scraper_bot python app.py
+4. Open your web browser and go to `http://127.0.0.1:5000/`
+5. Enter your search term, select the search engine, set the result limit, and start scraping!
+
+## Troubleshooting
+
+- If you encounter any dependency conflicts, try creating a new virtual environment and following the installation steps again.
+- Make sure Tor is running if you're trying to scrape .onion sites.
+- Check the console output for any error messages if the scraper isn't working as expected.
+
+If you continue to experience issues, please open an issue on the project's GitHub repository.
