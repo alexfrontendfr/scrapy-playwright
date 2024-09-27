@@ -1,41 +1,27 @@
-import setuptools
 
-from scrapy_playwright import __version__
+from setuptools import setup, find_packages
 
-
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
-
-
-setuptools.setup(
-    name="scrapy-playwright",
-    version=__version__,
-    license="BSD",
-    description="Playwright integration for Scrapy",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    author="Eugenio Lacuesta",
-    author_email="eugenio.lacuesta@gmail.com",
-    url="https://github.com/scrapy-plugins/scrapy-playwright",
-    packages=["scrapy_playwright"],
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: BSD License",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Framework :: Scrapy",
-        "Intended Audience :: Developers",
-        "Topic :: Internet :: WWW/HTTP",
-        "Topic :: Software Development :: Libraries :: Application Frameworks",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ],
-    python_requires=">=3.8",
+setup(
+    name="scrapy_playwright",
+    version="0.1.0",
+    packages=find_packages(),
     install_requires=[
-        "scrapy>=2.0,!=2.4.0",
-        "playwright>=1.15",
+        "scrapy>=2.5.1",
+        "playwright>=1.12.0",
+        "beautifulsoup4>=4.9.3",
+        "requests>=2.25.1",
+        "lxml>=4.6.3",
     ],
+    author="Your Name",
+    author_email="you@example.com",
+    description="A web scraper using Scrapy and Playwright",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/yourusername/scrapy-playwright",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.7',
 )

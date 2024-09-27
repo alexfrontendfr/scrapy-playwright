@@ -1,94 +1,105 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Scraper - Terminal Matrix UI</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Scraper</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            background-color: black;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        #matrix {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.8;
-        }
-        .matrix-column {
-            position: absolute;
-            width: 1.5em;
-            animation: scroll 12s linear infinite;  /* Slowed down the effect */
-            white-space: nowrap;
-            font-size: 20px;
-            color: #00ff00;
-        }
-        @keyframes scroll {
-            0% {
-                top: -100%;
-            }
-            100% {
-                top: 100%;
-            }
-        }
+      body {
+        font-family: "Courier New", monospace;
+        background-color: #000;
+        color: #00ff00;
+      }
+      .matrix-bg {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: -1;
+      }
+      .matrix-bg canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .form-container {
+        text-align: center;
+        margin-top: 20vh;
+      }
+      input,
+      button {
+        font-size: 1.2rem;
+        margin: 10px;
+        padding: 10px;
+        border: none;
+        outline: none;
+        background-color: #333;
+        color: #00ff00;
+      }
+      button {
+        cursor: pointer;
+      }
     </style>
-</head>
-<body class="flex flex-col items-center justify-center h-screen">
-
-    <h1 class="text-4xl mb-5 text-center">Web Scraper - Terminal Matrix UI</h1>
-
-    <form action="/" method="post" class="flex flex-col w-1/2">
-        <label for="search_term" class="mb-2">Enter Search Term:</label>
-        <input type="text" id="search_term" name="search_term" class="p-2 mb-5 bg-gray-900 text-green-500" required>
-
-        <label for="search_engine" class="mb-2">Select Search Engine:</label>
-        <select id="search_engine" name="search_engine" class="p-2 mb-5 bg-gray-900 text-green-500">
-            <option value="bing">Bing</option>
-            <option value="duckduckgo">DuckDuckGo</option>
-            <option value="onion">.Onion</option>
-        </select>
-
-        <label for="format_option" class="mb-2">Select Export Format:</label>
-        <select id="format_option" name="format_option" class="p-2 mb-5 bg-gray-900 text-green-500">
-            <option value="json">JSON</option>
-            <option value="csv">CSV</option>
-            <option value="sqlite">SQLite</option>
-        </select>
-
-        <label for="search_limit" class="mb-2">Set Search Limit:</label>
-        <input type="number" id="search_limit" name="search_limit" min="1" max="100" class="p-2 mb-5 bg-gray-900 text-green-500" required>
-
-        <button type="submit" class="p-2 bg-green-500 text-black hover:bg-green-400">Start Scraping</button>
-    </form>
-
-    <!-- Matrix background effect -->
-    <div id="matrix"></div>
+  </head>
+  <body>
+    <div class="matrix-bg">
+      <canvas id="matrix"></canvas>
+    </div>
+    <div class="form-container">
+      <h1 class="text-4xl mb-4">Search the Web</h1>
+      <form action="/search" method="POST" class="inline-block">
+        <input
+          type="text"
+          name="query"
+          placeholder="Enter your search term"
+          required
+          class="border-b-2"
+        />
+        <button
+          type="submit"
+          class="hover:bg-green-500 transition duration-300"
+        >
+          Search
+        </button>
+      </form>
+    </div>
 
     <script>
-        // JavaScript for the matrix effect
-        const matrixContainer = document.getElementById('matrix');
-        const columns = Math.floor(window.innerWidth / 15); // Adjust to cover entire width
-        const rows = Math.floor(window.innerHeight / 15); // Adjust to cover entire height
+      const canvas = document.getElementById("matrix");
+      const ctx = canvas.getContext("2d");
 
-        for (let i = 0; i < columns; i++) {
-            const column = document.createElement('div');
-            column.classList.add('matrix-column');
-            column.style.left = `${i * 15}px`;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
 
-            for (let j = 0; j < rows; j++) {
-                const char = document.createElement('span');
-                char.textContent = Math.random() < 0.5 ? '0' : '1';
-                column.appendChild(char);
-            }
+      const columns = canvas.width / 20;
+      const drops = Array(Math.floor(columns)).fill(1);
 
-            matrixContainer.appendChild(column);
-        }
+      const matrixEffect = () => {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00ff00";
+        ctx.font = "20px monospace";
+
+        drops.forEach((y, i) => {
+          const text = String.fromCharCode(Math.random() * 128);
+          ctx.fillText(text, i * 20, y * 20);
+          if (y * 20 > canvas.height || Math.random() > 0.95) {
+            drops[i] = 0;
+          }
+          drops[i]++;
+        });
+      };
+
+      setInterval(matrixEffect, 50);
+
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
     </script>
-</body>
+  </body>
 </html>

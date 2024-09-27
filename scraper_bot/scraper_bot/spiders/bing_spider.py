@@ -1,26 +1,42 @@
-
 import scrapy
-from bs4 import BeautifulSoup
+from scrapy_playwright.page import PageCoroutine
 
 class BingSpider(scrapy.Spider):
-    name = 'bing_spider'
-    
-    def __init__(self, keyword=None, *args, **kwargs):
-        super(BingSpider, self).__init__(*args, **kwargs)
-        if keyword:
-            self.search_query = keyword
-        else:
-            self.search_query = "default search"
-    
+    name = "bing_spider"
+    allowed_domains = ["bing.com"]
+    start_urls = ["https://www.bing.com"]
+
+    custom_settings = {
+        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": True},
+        "RETRY_ENABLED": True,
+        "RETRY_TIMES": 5,  # Retry failed requests up to 5 times
+        "DOWNLOAD_TIMEOUT": 60  # Timeout after 60 seconds
+    }
+
     def start_requests(self):
-        query = self.search_query.replace(' ', '+')
-        search_url = f'https://www.bing.com/search?q={query}'
-        yield scrapy.Request(url=search_url, callback=self.parse_results)
-    
-    def parse_results(self, response):
-        soup = BeautifulSoup(response.body, 'html.parser')
+        search_query = getattr(self, 'query', 'web scraping with Scrapy')  # default query if not provided
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url, 
+                meta=dict(
+                    playwright=True,
+                    playwright_page_coroutines=[
+                        PageCoroutine("wait_for_selector", "input[name=q]"),
+                        PageCoroutine("fill", "input[name=q]", search_query),
+                        PageCoroutine("click", "input[type=submit]"),
+                        PageCoroutine("wait_for_selector", "li.b_algo"),
+                    ],
+                )
+            )
+
+    def parse(self, response):
+        if response.status != 200:
+            self.logger.error(f"Failed to retrieve {response.url}")
+            return
         
-        # Scraping URLs from Bing search results
-        for link in soup.find_all('a'):
-            website_url = link.get('href')
-            yield {'website': website_url}
+        for result in response.css("li.b_algo"):
+            yield {
+                "title": result.css("h2 a::text").get(),
+                "link": result.css("h2 a::attr(href)").get(),
+                "snippet": result.css(".b_caption p::text").get(),
+            }

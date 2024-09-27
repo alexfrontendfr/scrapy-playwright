@@ -1,6 +1,5 @@
 # Scrapy settings for onion_scraping project
 BOT_NAME = 'onion_scraper'
-
 SPIDER_MODULES = ['scraper_bot.spiders']
 NEWSPIDER_MODULE = 'scraper_bot.spiders'
 

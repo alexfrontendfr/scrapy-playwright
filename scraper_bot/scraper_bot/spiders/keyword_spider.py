@@ -1,31 +1,42 @@
 import scrapy
-from bs4 import BeautifulSoup
+from scrapy_playwright.page import PageCoroutine
 
 class KeywordSpider(scrapy.Spider):
-    name = 'keyword_spider'
-    
-    def __init__(self, keyword=None, *args, **kwargs):
-        super(KeywordSpider, self).__init__(*args, **kwargs)
-        if keyword:
-            self.search_query = keyword
-        else:
-            self.search_query = "gay community"
+    name = "keyword_spider"
+    allowed_domains = ["duckduckgo.com"]
+    start_urls = ["https://duckduckgo.com"]
+
+    custom_settings = {
+        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": True},
+        "RETRY_ENABLED": True,
+        "RETRY_TIMES": 5,  # Retry failed requests up to 5 times
+        "DOWNLOAD_TIMEOUT": 60  # Timeout after 60 seconds
+    }
 
     def start_requests(self):
-        query = self.search_query.replace(' ', '+')
-        search_url = f'https://duckduckgo.com/html?q={query}'
-        yield scrapy.Request(url=search_url, callback=self.parse_results)
+        keyword = getattr(self, "keyword", "scrapy python")  # default keyword if not provided
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url, 
+                meta=dict(
+                    playwright=True,
+                    playwright_page_coroutines=[
+                        PageCoroutine("wait_for_selector", "input[name=q]"),
+                        PageCoroutine("fill", "input[name=q]", keyword),
+                        PageCoroutine("click", "input[type=submit]"),
+                        PageCoroutine("wait_for_selector", "div.result__body"),
+                    ],
+                )
+            )
 
-    def parse_results(self, response):
-        soup = BeautifulSoup(response.body, 'html.parser')
+    def parse(self, response):
+        if response.status != 200:
+            self.logger.error(f"Failed to retrieve {response.url}")
+            return
         
-        # Scraping URLs from DuckDuckGo search results
-        for link in soup.find_all('a', {'class': 'result__a'}):
-            website_url = link.get('href')
-            yield {'website': website_url}
-
-    def close(self, reason):
-        # Save the results in a unique JSON file for each search query
-        output_file = f'{self.search_query.replace("+", "_")}_results.json'
-        with open(output_file, 'w') as f:
-            f.write(self.result_items)
+        for result in response.css("div.result__body"):
+            yield {
+                "title": result.css("h2 a::text").get(),
+                "link": result.css("h2 a::attr(href)").get(),
+                "snippet": result.css(".result__snippet::text").get(),
+            }

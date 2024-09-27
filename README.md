@@ -1,127 +1,28 @@
-# Web Scraper Setup Guide
+# Scrapy Playwright Web Scraper
 
-## 1. Project Overview
+This project uses Scrapy and Playwright to perform web scraping across various search engines, including Google, Bing, DuckDuckGo, and Tor .onion websites.
 
-This web scraper allows you to scrape search results from Bing, DuckDuckGo, and .onion sites. The project features:
+## Features
 
-- A Flask UI for inputting search terms, selecting search engines, and choosing output formats (JSON, CSV, SQLite).
-- Automated scraping for multiple search terms and engines without overwriting results.
-- Support for .onion scraping using Tor.
+- Matrix-themed UI for search results.
+- Supports scraping from Google, Bing, DuckDuckGo, and the dark web (.onion sites) using Tor.
+- Real-time form validation with progress indicator.
+- Adjustable search result limits.
+- Fully responsive and modern tech-themed design.
+- Proxy rotation and user-agent randomization.
 
-## 2. Cloning the Project from GitHub
+## Setup Instructions
 
-To get started, clone the project from GitHub to your local machine:
+1. **Clone the repository**:
 
-```
-git clone https://github.com/alexfrontendfr/scraper_bot.git
-cd scraper_bot
-```
+   git clone https://github.com/alexfrontendfr/scrapy-playwright.git
 
-## 3. Installation Commands
+2. Navigate to the folder
+   cd scrapy-playwright
 
-### For Windows:
+3. Install dependencies
 
-1. Install Python: Download and install Python from [python.org](https://www.python.org/downloads/).
-2. Install dependencies:
+pip install -r requirements.txt
 
-   ```
-   pip install scrapy Flask scrapy-user-agents
-   ```
-
-3. Install Playwright for Scrapy:
-
-   ```
-   pip install scrapy-playwright
+4. Set up playwright:
    playwright install
-   ```
-
-4. If you plan to scrape `.onion` sites, install **Tor**:
-   - Download and install the **Tor Browser** from [torproject.org](https://www.torproject.org/download/).
-   - Run **Tor** by executing:
-   ```
-   "C:\Program Files\Tor Browser\Browser\TorBrowser\Tor\tor.exe"
-   ```
-
-### For Linux:
-
-1. Install Python if it's not already installed:
-
-   ```
-   sudo apt update
-   sudo apt install python3 python3-pip
-   ```
-
-2. Install the required dependencies:
-
-   ```
-   pip3 install scrapy Flask scrapy-user-agents
-   ```
-
-3. Install Playwright for Scrapy:
-
-   ```
-   pip3 install scrapy-playwright
-   playwright install
-   ```
-
-4. Install **Tor** for .onion scraping:
-
-   ```
-   sudo apt install tor
-   ```
-
-   Start Tor with:
-
-   ```
-   tor
-   ```
-
-## 4. Running the Flask UI
-
-Once all dependencies are installed, start the Flask UI to begin scraping.
-
-1. Navigate to the project directory:
-
-   ```
-   cd scraper_bot/scraper_bot
-   ```
-
-2. Run the Flask app:
-
-   ```
-   python app.py
-   ```
-
-3. Open your web browser and go to `http://127.0.0.1:5000/`.
-
-4. You can now:
-   - Input search terms.
-   - Select the search engine (Bing, DuckDuckGo, or .onion).
-   - Choose the output format (JSON, CSV, SQLite).
-   - Start scraping!
-
-## 5. Exporting Results
-
-The scraper automatically saves results based on your selected format:
-
-- **JSON**: Saved as `search_term_results.json`
-- **CSV**: Saved as `search_term_results.csv`
-- **SQLite**: Data is saved in an SQLite database.
-
-## 6. Running Multiple Searches
-
-The Flask app allows you to automate searches for different terms across multiple search engines, with outputs saved separately.
-
-## 7. Scraping .Onion Sites
-
-To scrape `.onion` sites:
-
-1. Ensure **Tor** is running.
-2. Choose `.onion` as the search engine from the Flask UI.
-3. Enter a valid `.onion` URL as the search term or use a directory of `.onion` sites.
-
-## 8. Additional Features and Customizations
-
-You can expand the project to include more search engines by creating new spiders. For example, you can add a Google or Yahoo spider by following the same pattern used in `bing_spider.py` or `keyword_spider.py`.
-
-If you encounter any issues or need further assistance, feel free to reach out!
