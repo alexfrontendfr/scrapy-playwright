@@ -1,6 +1,7 @@
 # File: scraper_bot/middlewares.py
 import random
 from scrapy.utils.project import get_project_settings
+from scraper_bot.utils.proxy_helper import proxy_manager, tor_manager, get_tor_proxy
 
 # Middleware for rotating user agents
 class RandomUserAgentMiddleware:
@@ -25,17 +26,14 @@ class ProxyMiddleware:
         self.proxies = self.settings.get('PROXY_LIST', [])  # Fetch the full proxy list
 
     def process_request(self, request, spider):
-        if self.proxies:
-            proxy = random.choice(self.proxies)
-            request.meta['proxy'] = proxy
-            spider.logger.info(f'Using proxy: {proxy}')
+        if spider.use_tor:
+            request.meta['proxy'] = get_tor_proxy()
+            tor_manager.renew_tor_ip()
         else:
-            spider.logger.warning('No proxies available in PROXY_LIST.')
+            request.meta['proxy'] = proxy_manager.get_random_proxy()
 
     def process_exception(self, request, exception, spider):
-        # If a request fails due to a proxy issue, retry with another proxy
-        if self.proxies:
-            new_proxy = random.choice(self.proxies)
+        if not spider.use_tor:
+            new_proxy = proxy_manager.get_random_proxy()
             request.meta['proxy'] = new_proxy
-            spider.logger.info(f'Retrying with a new proxy: {new_proxy}')
             return request

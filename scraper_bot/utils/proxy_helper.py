@@ -17,6 +17,10 @@ class ProxyManager:
         self.last_fetch_time: float = 0
         self.cache_duration: int = 3600  # Cache proxies for 1 hour
 
+    def refresh_proxies(self):
+        self._fetch_proxies()
+        self.last_fetch_time = time.time()    
+
     def get_proxies(self) -> List[str]:
         if self._should_refresh_cache():
             self._fetch_proxies()
@@ -69,3 +73,7 @@ proxy_manager = ProxyManager()
 
 # Initialize the TorManager
 tor_manager = TorManager()
+
+# Function to get proxies (for compatibility with keyword_spider.py)
+def get_proxies() -> List[str]:
+    return proxy_manager.get_proxies()

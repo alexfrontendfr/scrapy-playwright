@@ -1,0 +1,37 @@
+{% extends "base.html" %} {% block content %}
+<h1 class="text-4xl mb-5 text-center">Search Results</h1>
+
+<p class="mb-4">Number of results fetched: {{ results|length }}</p>
+
+<div class="flex space-x-4 mb-8">
+  <a
+    href="{{ url_for('download_results') }}"
+    class="p-2 bg-green-500 text-black rounded hover:bg-green-600"
+    >Download Results</a
+  >
+  <a
+    href="{{ url_for('index') }}"
+    class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >New Search</a
+  >
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for result in results %}
+  <div class="border border-green-500 p-4 rounded-lg">
+    <h2 class="text-xl mb-2">{{ result.title }}</h2>
+    <a
+      href="{{ result.url }}"
+      class="text-green-500 hover:underline"
+      target="_blank"
+      >{{ result.url }}</a
+    >
+    {% if result.snippet %}
+    <p class="mt-2">{{ result.snippet }}</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <p>No results found</p>
+  {% endfor %}
+</div>
+{% endblock %}

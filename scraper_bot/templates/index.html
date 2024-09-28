@@ -1,198 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web Scraper - Terminal Matrix UI</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
+{% extends "base.html" %} {% block content %}
+<h1 class="text-4xl mb-5 text-center">Web Scraper - Terminal Matrix UI</h1>
+
+<form id="searchForm" class="mb-8">
+  <div class="mb-4">
+    <label for="query" class="block mb-2">Enter Search Term:</label>
+    <input
+      type="text"
+      id="query"
+      name="query"
+      required
+      class="w-full p-2 bg-black border border-green-500 text-green-500"
     />
-    <style>
-      #matrix {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-      }
-    </style>
-  </head>
-  <body class="bg-black text-green-500 font-mono">
-    <canvas id="matrix"></canvas>
-    <div class="container mx-auto px-4 py-8">
-      <h1 class="text-4xl mb-5 text-center">
-        Web Scraper - Terminal Matrix UI
-      </h1>
-      <form id="searchForm" class="mb-8">
-        <div class="mb-4">
-          <label for="query" class="block mb-2">Enter Search Term:</label>
-          <input
-            type="text"
-            id="query"
-            name="query"
-            required
-            class="w-full p-2 bg-gray-800 text-green-500 border border-green-500"
-          />
-        </div>
-        <div class="mb-4">
-          <label for="engine" class="block mb-2">Select Search Engine:</label>
-          <select
-            id="engine"
-            name="engine"
-            required
-            class="w-full p-2 bg-gray-800 text-green-500 border border-green-500"
-          >
-            <option value="bing">Bing</option>
-            <option value="duckduckgo">DuckDuckGo</option>
-            <option value="google">Google</option>
-            <option value="onion">Onion</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label for="limit" class="block mb-2">Result Limit:</label>
-          <input
-            type="number"
-            id="limit"
-            name="limit"
-            value="10"
-            min="1"
-            max="100"
-            class="w-full p-2 bg-gray-800 text-green-500 border border-green-500"
-          />
-        </div>
-        <div class="mb-4">
-          <label for="use_tor" class="inline-flex items-center">
-            <input
-              type="checkbox"
-              id="use_tor"
-              name="use_tor"
-              class="form-checkbox h-5 w-5 text-green-500"
-            />
-            <span class="ml-2">Use Tor (for anonymous scraping)</span>
-          </label>
-        </div>
-        <button
-          type="submit"
-          class="w-full p-2 bg-green-500 text-black hover:bg-green-400"
-        >
-          Start Search
-        </button>
-      </form>
-      <div id="loadingSpinner" class="mt-5 text-center" style="display: none">
-        Searching... Please wait.
-      </div>
-      <div
-        id="progressBar"
-        class="w-full bg-gray-800 mt-5"
-        style="height: 25px; display: none"
-      >
-        <div
-          id="progressBarFill"
-          class="bg-green-500 h-full text-black text-center"
-          style="width: 0%"
-        >
-          0%
-        </div>
-      </div>
-      <div id="results" class="mt-8"></div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-      // Matrix background effect
-      const canvas = document.getElementById("matrix");
-      const ctx = canvas.getContext("2d");
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      const katakana =
-        "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン";
-      const latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const nums = "0123456789";
-      const alphabet = katakana + latin + nums;
-      const fontSize = 16;
-      const columns = canvas.width / fontSize;
-      const rainDrops = [];
-      for (let x = 0; x < columns; x++) {
-        rainDrops[x] = 1;
-      }
-      const draw = () => {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#0F0";
-        ctx.font = fontSize + "px monospace";
-        for (let i = 0; i < rainDrops.length; i++) {
-          const text = alphabet.charAt(
-            Math.floor(Math.random() * alphabet.length)
-          );
-          ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-          if (
-            rainDrops[i] * fontSize > canvas.height &&
-            Math.random() > 0.975
-          ) {
-            rainDrops[i] = 0;
-          }
-          rainDrops[i]++;
-        }
-      };
-      setInterval(draw, 30);
+  </div>
 
-      // Form submission and results handling
-      document
-        .getElementById("searchForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const form = e.target;
-          const formData = new FormData(form);
+  <div class="mb-4">
+    <label for="engine" class="block mb-2">Select Search Engine:</label>
+    <select
+      id="engine"
+      name="engine"
+      required
+      class="w-full p-2 bg-black border border-green-500 text-green-500"
+    >
+      <option value="google">Google</option>
+      <option value="bing">Bing</option>
+      <option value="duckduckgo">DuckDuckGo</option>
+      <option value="onion">Onion</option>
+      <option value="keyword">Keyword</option>
+    </select>
+  </div>
 
-          document.getElementById("loadingSpinner").style.display = "block";
-          document.getElementById("progressBar").style.display = "block";
-          document.getElementById("results").innerHTML = "";
+  <div class="mb-4">
+    <label for="limit" class="block mb-2">Result Limit:</label>
+    <input
+      type="number"
+      id="limit"
+      name="limit"
+      min="1"
+      max="100"
+      value="10"
+      required
+      class="w-full p-2 bg-black border border-green-500 text-green-500"
+    />
+  </div>
 
-          try {
-            const response = await axios.post("/search", formData, {
-              onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-                );
-                document.getElementById("progressBarFill").style.width =
-                  percentCompleted + "%";
-                document.getElementById("progressBarFill").innerText =
-                  percentCompleted + "%";
-              },
-            });
+  <div class="mb-4">
+    <label class="flex items-center">
+      <input type="checkbox" id="use_tor" name="use_tor" class="mr-2" />
+      <span>Use Tor (for anonymous scraping)</span>
+    </label>
+  </div>
 
-            const results = await fetchResults();
-            displayResults(results);
-          } catch (error) {
-            console.error("Error:", error);
-            document.getElementById("results").innerHTML =
-              '<p class="text-red-500">An error occurred while processing your request.</p>';
-          } finally {
-            document.getElementById("loadingSpinner").style.display = "none";
-            document.getElementById("progressBar").style.display = "none";
+  <button
+    type="submit"
+    class="w-full p-2 bg-green-500 text-black font-bold hover:bg-green-600"
+  >
+    Start Search
+  </button>
+</form>
+
+<div id="statusContainer" class="mt-8 hidden">
+  <h2 class="text-2xl mb-4">Scraping Status</h2>
+  <div class="bg-gray-200 rounded">
+    <div
+      id="progressBar"
+      class="bg-green-500 text-xs leading-none py-1 text-center text-white rounded"
+      style="width: 0%"
+    ></div>
+  </div>
+  <p id="statusText" class="mt-2"></p>
+</div>
+
+<div id="resultsContainer" class="mt-8 hidden">
+  <h2 class="text-2xl mb-4">Search Results</h2>
+  <ul id="resultsList" class="list-disc pl-5"></ul>
+</div>
+
+<script>
+  document
+    .getElementById("searchForm")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const statusContainer = document.getElementById("statusContainer");
+      const progressBar = document.getElementById("progressBar");
+      const statusText = document.getElementById("statusText");
+      const resultsContainer = document.getElementById("resultsContainer");
+      const resultsList = document.getElementById("resultsList");
+
+      statusContainer.classList.remove("hidden");
+      resultsContainer.classList.add("hidden");
+      resultsList.innerHTML = "";
+
+      fetch("/search", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            checkStatus();
           }
         });
+    });
 
-      async function fetchResults() {
-        const response = await axios.get("/results");
-        return response.data;
-      }
+  function checkStatus() {
+    fetch("/status")
+      .then((response) => response.json())
+      .then((data) => {
+        const progressBar = document.getElementById("progressBar");
+        const statusText = document.getElementById("statusText");
 
-      function displayResults(results) {
-        const resultsContainer = document.getElementById("results");
-        if (results.length === 0) {
-          resultsContainer.innerHTML = "<p>No results found.</p>";
-          return;
+        progressBar.style.width = `${data.progress}%`;
+        statusText.textContent = data.is_scraping
+          ? "Scraping in progress..."
+          : "Scraping complete";
+
+        if (data.is_scraping) {
+          setTimeout(checkStatus, 1000);
+        } else {
+          fetchResults();
         }
+      });
+  }
 
-        let html = '<h2 class="text-2xl mb-4">Search Results:</h2><ul>';
-        results.forEach((result) => {
-          html += `<li class="mb-2"><a href="${result.url}" target="_blank" class="text-green-500 hover:underline">${result.url}</a></li>`;
-        });
-        html += "</ul>";
-        resultsContainer.innerHTML = html;
-      }
-    </script>
-  </body>
-</html>
+  function fetchResults() {
+    fetch("/results")
+      .then((response) => response.text())
+      .then((html) => {
+        const resultsContainer = document.getElementById("resultsContainer");
+        const resultsList = document.getElementById("resultsList");
+
+        resultsContainer.classList.remove("hidden");
+        resultsList.innerHTML = html;
+      });
+  }
+</script>
+{% endblock %}
