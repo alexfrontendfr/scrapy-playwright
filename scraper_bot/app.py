@@ -1,79 +1,27 @@
 import os
 import sys
-import time
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, flash
-import threading
-import asyncio
-from scrapy.crawler import CrawlerRunner
-from twisted.internet import reactor
-from multiprocessing import Queue, Process
-import json
-from utils.cache_manager import cache_manager
-from utils.result_processor import process_results
-from spiders.google_spider import GoogleSpider
-from spiders.bing_spider import BingSpider
-from spiders.duckduckgo_spider import DuckDuckGoSpider
-from spiders.onion_spider import OnionSpider
-from spiders.keyword_spider import KeywordSpider
-from scraper_bot.utils.progress_tracker import ProgressTracker
+# Add the project root directory to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
+
+from flask import Flask, render_template, request, jsonify
+from scraper_bot.spiders.google_spider import GoogleSpider
+from scraper_bot.spiders.bing_spider import BingSpider
+from scraper_bot.spiders.duckduckgo_spider import DuckDuckGoSpider
+from scraper_bot.spiders.onion_spider import OnionSpider
+from scraper_bot.spiders.keyword_spider import KeywordSpider
+from scraper_bot.tasks import run_spider
+from scraper_bot.utils.cache_manager import cache_manager
+from scraper_bot.utils.proxy_helper import tor_manager
+import logging
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24).hex()
 
-# Global variable to store search results
-results_data = []
-scraping_status = {'is_scraping': False, 'progress': 0}
-
-
-progress_tracker = ProgressTracker()
-
-def run_spider_in_thread(spider_class, query, limit, use_tor):
-    global results_data, scraping_status
-    
-    try:
-        # Check cache first
-        cached_results = cache_manager.get_cached_results(query, spider_class.name)
-        if cached_results:
-            results_data = cached_results[:limit]
-            scraping_status = {'is_scraping': False, 'progress': 100}
-            return
-
-        scraping_status = {'is_scraping': True, 'progress': 0}
-        
-        def f(q):
-            try:
-                runner = CrawlerRunner()
-                deferred = runner.crawl(spider_class, query=query, limit=limit, use_tor=use_tor, progress_tracker=progress_tracker)
-                deferred.addBoth(lambda _: reactor.stop())
-                reactor.run(installSignalHandlers=0)
-                q.put(None)
-            except Exception as e:
-                q.put(e)
-
-        q = Queue()
-        p = Process(target=f, args=(q,))
-        p.start()
-        
-        while p.is_alive():
-            scraping_status['progress'] = progress_tracker.get_progress()
-            time.sleep(0.5)
-        
-        result = q.get()
-        p.join()
-
-        if result is not None:
-            raise result
-
-        results_data = process_results('output.json')[:limit]
-        cache_manager.cache_results(query, spider_class.name, results_data)
-        scraping_status = {'is_scraping': False, 'progress': 100}
-    except Exception as e:
-        app.logger.error(f"Error running spider: {e}")
-        flash(f"An error occurred while scraping: {str(e)}", 'error')
-        results_data = []
-        scraping_status = {'is_scraping': False, 'progress': 0}
+# Configure logging
+logging.basicConfig(filename='scraper.log', level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 @app.route('/')
 def index():
@@ -81,46 +29,58 @@ def index():
 
 @app.route('/search', methods=['POST'])
 def search():
-    data = request.form
-    query = data.get('query')
-    engine = data.get('engine')
-    limit = int(data.get('limit', 10))
-    use_tor = data.get('use_tor', 'false').lower() == 'true'
+    query = request.form.get('query')
+    engines = request.form.getlist('engines')
+    limit = int(request.form.get('limit', 10))
+    use_tor = request.form.get('use_tor', 'false').lower() == 'true'
 
-    spider_class = {
-        'google': GoogleSpider,
-        'bing': BingSpider,
-        'duckduckgo': DuckDuckGoSpider,
-        'onion': OnionSpider,
-        'keyword': KeywordSpider
-    }.get(engine)
+    if not query:
+        return jsonify({'error': 'Search query is required'}), 400
 
-    if not spider_class:
-        flash(f"Invalid search engine selected: {engine}", 'error')
-        return redirect(url_for('index'))
+    if not engines:
+        return jsonify({'error': 'At least one search engine must be selected'}), 400
 
-    threading.Thread(target=run_spider_in_thread, args=(spider_class, query, limit, use_tor)).start()
-    return jsonify({'status': 'success'})
+    tasks = []
+    for engine in engines:
+        task = run_spider.delay(engine, query, limit, use_tor)
+        tasks.append(task)
 
-@app.route('/results')
-def results():
-    return render_template('results.html', results=results_data)
+    return jsonify({'task_ids': [task.id for task in tasks]})
 
-@app.route('/status')
-def status():
-    return jsonify(scraping_status)
+@app.route('/results/<task_id>')
+def get_results(task_id):
+    task = run_spider.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'status': 'Task is pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'status': task.info.get('status', '')
+        }
+        if 'result' in task.info:
+            response['result'] = task.info['result']
+    else:
+        response = {
+            'state': task.state,
+            'status': str(task.info)
+        }
+    return jsonify(response)
 
-@app.route('/download_results')
-def download_results():
-    if not results_data:
-        flash("No results available for download", 'warning')
-        return redirect(url_for('index'))
-    
-    with open('results.json', 'w') as f:
-        json.dump(results_data, f)
-    
-    return send_file('results.json', as_attachment=True)
+@app.route('/clear_cache', methods=['POST'])
+def clear_cache():
+    cache_manager.clear_expired_cache()
+    return jsonify({'status': 'Cache cleared successfully'})
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
+if __name__ == '__main__':
+    app.run(debug=False)

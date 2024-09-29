@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web Scraper - Terminal Matrix UI</title>
+    <title>Matrix Web Scraper</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -11,10 +11,13 @@
     <style>
       body {
         background-color: #000;
-        color: #0f0;
+        color: #00ff00;
         font-family: "Courier New", monospace;
       }
-      #matrix-bg {
+      .matrix-bg {
+        background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext y=".9em" font-size="90"%3E🧬%3C/text%3E%3C/svg%3E');
+        background-repeat: repeat;
+        opacity: 0.1;
         position: fixed;
         top: 0;
         left: 0;
@@ -22,65 +25,30 @@
         height: 100%;
         z-index: -1;
       }
-      .container {
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 10px;
-        padding: 20px;
+      .neon-border {
+        border: 2px solid #00ff00;
+        box-shadow: 0 0 10px #00ff00, inset 0 0 10px #00ff00;
+      }
+      .neon-text {
+        text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00,
+          0 0 20px #00ff00;
       }
     </style>
   </head>
-  <body>
-    <canvas id="matrix-bg"></canvas>
-    <div class="container mx-auto px-4 py-8">
+  <body class="min-h-screen flex flex-col">
+    <div class="matrix-bg"></div>
+    <header class="bg-black p-4">
+      <h1 class="text-3xl font-bold neon-text text-center">
+        Matrix Web Scraper
+      </h1>
+    </header>
+    <main class="flex-grow container mx-auto px-4 py-8">
       {% block content %}{% endblock %}
-    </div>
-    <script>
-      const canvas = document.getElementById("matrix-bg");
-      const ctx = canvas.getContext("2d");
-
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      const katakana =
-        "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン";
-      const latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const nums = "0123456789";
-
-      const alphabet = katakana + latin + nums;
-
-      const fontSize = 16;
-      const columns = canvas.width / fontSize;
-
-      const rainDrops = [];
-
-      for (let x = 0; x < columns; x++) {
-        rainDrops[x] = 1;
-      }
-
-      const draw = () => {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#0f0";
-        ctx.font = fontSize + "px monospace";
-
-        for (let i = 0; i < rainDrops.length; i++) {
-          const text = alphabet.charAt(
-            Math.floor(Math.random() * alphabet.length)
-          );
-          ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-
-          if (
-            rainDrops[i] * fontSize > canvas.height &&
-            Math.random() > 0.975
-          ) {
-            rainDrops[i] = 0;
-          }
-          rainDrops[i]++;
-        }
-      };
-
-      setInterval(draw, 30);
-    </script>
+    </main>
+    <footer class="bg-black p-4 text-center">
+      <p>&copy; 2024 Matrix Web Scraper</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    {% block scripts %}{% endblock %}
   </body>
 </html>

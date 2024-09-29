@@ -1,52 +1,37 @@
-import scrapy
 from scraper_bot.spiders.base_spider import BaseSpider
-from scrapy_playwright.page import PageMethod
-from scraper_bot.utils.cache_manager import cache_manager
-import json
+from bs4 import BeautifulSoup
+from urllib.parse import quote_plus, urljoin
 
 class DuckDuckGoSpider(BaseSpider):
-    name = "duckduckgo_spider"
-    
-    def start_requests(self):
-        cached_results = cache_manager.get_cached_results(self.query, 'duckduckgo')
-        if cached_results:
-            self.logger.info(f"Using cached results for query: {self.query}")
-            for result in cached_results:
-                yield self.process_result(result)
-            return
+    name = 'duckduckgo_spider'
 
-        url = f"https://duckduckgo.com/?q={self.query}"
-        proxy = self.get_proxy()
+    def get_search_url(self):
+        return f'https://duckduckgo.com/html?q={quote_plus(self.query)}'
 
-        yield scrapy.Request(
-            url=url,
-            meta={
-                'playwright': True,
-                'proxy': proxy
-            },
-            callback=self.parse_results
-        )
+    async def parse_results(self, page):
+        content = await page.content()
+        soup = BeautifulSoup(content, 'lxml')
+        results = []
+        
+        for result in soup.select('div.result'):
+            title_elem = result.select_one('h2.result__title a')
+            snippet_elem = result.select_one('a.result__snippet')
+            
+            if title_elem and snippet_elem:
+                results.append({
+                    'title': title_elem.text.strip(),
+                    'url': title_elem['href'],
+                    'snippet': snippet_elem.text.strip()
+                })
+        
+        return results
 
-    def parse_results(self, response):
-        results = response.css('a.result__a::attr(href)').getall()
-        for result in results:
-            yield self.process_result({'url': result})
-
-        if self.results_fetched < self.limit:
-            next_page = response.css('a.result--more__btn::attr(href)').get()
-            if next_page:
-                next_page_url = response.urljoin(next_page)
-                proxy = self.get_proxy()
-
-                yield scrapy.Request(
-                    url=next_page_url,
-                    meta={'playwright': True, 'proxy': proxy},
-                    callback=self.parse_results
-                )
-        else:
-            cache_manager.cache_results(self.query, 'duckduckgo', self.results)
-
-    def closed(self, reason):
-        super().closed(reason)
-        with open('output.json', 'w') as f:
-            json.dump(self.results, f, indent=4)
+    async def get_next_page(self, page):
+        next_link = await page.query_selector('input[value="Next"]')
+        if next_link:
+            form = await page.query_selector('form#links_wrapper')
+            if form:
+                await form.evaluate('form => form.submit()')
+                await page.wait_for_load_state('networkidle')
+                return page.url
+        return None

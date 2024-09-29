@@ -11,7 +11,7 @@ class BingSpider(BaseSpider):
         cached_results = cache_manager.get_cached_results(self.query, 'bing')
         if cached_results:
             self.logger.info(f"Using cached results for query: {self.query}")
-            for result in cached_results:
+            for result in cached_results[:self.limit]:
                 yield self.process_result(result)
             return
 
@@ -34,6 +34,9 @@ class BingSpider(BaseSpider):
         
         results = await page.query_selector_all('li.b_algo h2 a')
         for result in results:
+            if self.results_fetched >= self.limit:
+                await page.close()
+                return
             url = await result.get_attribute('href')
             yield self.process_result({'url': url})
 

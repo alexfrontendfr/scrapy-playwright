@@ -1,37 +1,102 @@
-{% extends "base.html" %} {% block content %}
-<h1 class="text-4xl mb-5 text-center">Search Results</h1>
-
-<p class="mb-4">Number of results fetched: {{ results|length }}</p>
-
-<div class="flex space-x-4 mb-8">
-  <a
-    href="{{ url_for('download_results') }}"
-    class="p-2 bg-green-500 text-black rounded hover:bg-green-600"
-    >Download Results</a
-  >
-  <a
-    href="{{ url_for('index') }}"
-    class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    >New Search</a
-  >
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {% for result in results %}
-  <div class="border border-green-500 p-4 rounded-lg">
-    <h2 class="text-xl mb-2">{{ result.title }}</h2>
-    <a
-      href="{{ result.url }}"
-      class="text-green-500 hover:underline"
-      target="_blank"
-      >{{ result.url }}</a
-    >
-    {% if result.snippet %}
-    <p class="mt-2">{{ result.snippet }}</p>
-    {% endif %}
-  </div>
-  {% else %}
-  <p>No results found</p>
-  {% endfor %}
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Results - Web Scraper</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #000;
+        color: #00ff00;
+        font-family: "Courier New", monospace;
+      }
+      .matrix-bg {
+        background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext y=".9em" font-size="90"%3E🖥️%3C/text%3E%3C/svg%3E');
+        background-repeat: repeat;
+        opacity: 0.1;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+      }
+      .neon-border {
+        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00,
+          0 0 20px #00ff00;
+      }
+      .neon-text {
+        text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00,
+          0 0 20px #00ff00;
+      }
+    </style>
+  </head>
+  <body class="flex flex-col min-h-screen">
+    <div class="matrix-bg"></div>
+    <header class="bg-black p-4">
+      <h1 class="text-3xl font-bold neon-text text-center">Search Results</h1>
+    </header>
+    <main class="flex-grow container mx-auto px-4 py-8">
+      <div class="mb-8 flex justify-between items-center">
+        <p class="text-xl">
+          Number of results:
+          <span id="resultCount" class="font-bold">{{ results|length }}</span>
+        </p>
+        <button
+          id="clearResults"
+          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300"
+        >
+          Clear All Results
+        </button>
+      </div>
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        id="results"
+      >
+        {% for result in results %}
+        <div class="bg-gray-800 p-4 rounded-lg neon-border">
+          <h2 class="text-xl font-bold mb-2">{{ result.title }}</h2>
+          <p class="text-sm mb-2">{{ result.url }}</p>
+          <p class="mb-2">{{ result.snippet }}</p>
+          <p class="text-xs">
+            Engine: {{ result.engine }} | Query: {{ result.query }}
+          </p>
+          <p class="text-xs">
+            Scraped at: {{ result.scraped_at.strftime('%Y-%m-%d %H:%M:%S') }}
+          </p>
+        </div>
+        {% endfor %}
+      </div>
+    </main>
+    <footer class="bg-black p-4 text-center">
+      <p>&copy; 2024 Web Scraper</p>
+    </footer>
+    <script>
+      document
+        .getElementById("clearResults")
+        .addEventListener("click", function () {
+          if (
+            confirm(
+              "Are you sure you want to clear all results? This action cannot be undone."
+            )
+          ) {
+            fetch("/clear_results", {
+              method: "POST",
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.status === "All results cleared") {
+                  location.reload();
+                } else {
+                  alert("An error occurred while clearing results.");
+                }
+              });
+          }
+        });
+    </script>
+  </body>
+</html>

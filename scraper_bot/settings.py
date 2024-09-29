@@ -1,25 +1,25 @@
-# Scrapy settings for scraper_bot project
+# Web Scraper settings
 
-BOT_NAME = 'scraper_bot'
+BOT_NAME = 'web_scraper'
 
-SPIDER_MODULES = ['scraper_bot.spiders']
-NEWSPIDER_MODULE = 'scraper_bot.spiders'
+SPIDER_MODULES = ['web_scraper.spiders']
+NEWSPIDER_MODULE = 'web_scraper.spiders'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy
-CONCURRENT_REQUESTS = 16
+CONCURRENT_REQUESTS = 32
 
 # Configure a delay for requests for the same website
-DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 0.5
+RANDOMIZE_DOWNLOAD_DELAY = True
 
 # Enable and configure the AutoThrottle extension
 AUTOTHROTTLE_ENABLED = True
 AUTOTHROTTLE_START_DELAY = 5
 AUTOTHROTTLE_MAX_DELAY = 60
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
-AUTOTHROTTLE_DEBUG = True
 
 # Enable and configure HTTP caching
 HTTPCACHE_ENABLED = True
@@ -27,7 +27,6 @@ HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = 'httpcache'
 HTTPCACHE_IGNORE_HTTP_CODES = []
 HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
-
 
 # Playwright settings
 DOWNLOAD_HANDLERS = {
@@ -42,29 +41,30 @@ PLAYWRIGHT_LAUNCH_OPTIONS = {
     "timeout": 20 * 1000,  # 20 seconds
 }
 
-# Tor settings
-HTTP_PROXY = 'socks5://127.0.0.1:9050'  # Tor proxy
-
-# Update downloader middlewares
-DOWNLOADER_MIDDLEWARES = {
-    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
-    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
-    'scrapy_playwright.middleware.PlaywrightMiddleware': 1000,
-    'scraper_bot.middlewares.ProxyMiddleware': 750,
-}
-
 # Custom settings
 SEARCH_CACHE_DIR = 'search_cache'
 SEARCH_CACHE_DURATION = 86400  # 24 hours
 
-# Optimize performance for large-scale scraping
-CONCURRENT_REQUESTS_PER_DOMAIN = 8
-CONCURRENT_REQUESTS_PER_IP = 8
+# Middleware settings
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
+    'scrapy_playwright.middleware.PlaywrightMiddleware': 1000,
+}
 
-# Enable logging
-LOG_ENABLED = True
+# Item pipeline
+ITEM_PIPELINES = {
+    'web_scraper.pipelines.WebScraperPipeline': 300,
+}
+
+# Logging settings
 LOG_LEVEL = 'INFO'
 LOG_FILE = 'scraper.log'
 
-# Enable stats collection
-STATS_CLASS = 'scrapy.statscollectors.MemoryStatsCollector'
+# Retry settings
+RETRY_ENABLED = True
+RETRY_TIMES = 3
+RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
+
+# Database settings
+DATABASE_URL = 'sqlite:///scraper_results.db'

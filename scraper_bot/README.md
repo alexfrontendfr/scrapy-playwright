@@ -1,61 +1,62 @@
+# Matrix Web Scraper
 
-# Scrapy Playwright Web Scraper
-
-This project uses Scrapy and Playwright to perform web scraping across various search engines, including Google, Bing, DuckDuckGo, and Tor .onion websites.
+A powerful and stylish web scraper with a Matrix-inspired UI, capable of scraping various search engines including Google, Bing, DuckDuckGo, and Onion sites.
 
 ## Features
 
-- Matrix-themed UI for search results.
-- Supports scraping from Google, Bing, DuckDuckGo, and the dark web (.onion sites) using Tor.
-- Real-time form validation with progress indicator.
-- Adjustable search result limits.
-- Fully responsive and modern tech-themed design.
-- Proxy rotation and user-agent randomization.
+- Matrix-themed UI for an immersive experience
+- Support for multiple search engines
+- Tor integration for anonymous scraping
+- Celery task queue for efficient background processing
+- Caching mechanism to store frequently accessed results
+- Real-time progress tracking
+- Downloadable results in JSON format
 
-## Setup Instructions
+## Installation
 
-1. **Clone the repository**:
-
-   git clone https://github.com/yourusername/scrapy-playwright.git
-
-2. **Navigate to the project directory**:
-
+1. Clone the repository:
+   git clone https://github.com/alexfrontendfr/scrapy-playwright.git
    cd scrapy-playwright
+2. Create and activate a virtual environment:
+   python -m venv venv
+   source venv/bin/activate # On Windows, use venv\Scripts\activate
 
-3. **Install the required dependencies**:
-
+3. Install the required dependencies:
    pip install -r requirements.txt
 
-4. **Set up Playwright** (required for headless browser interaction):
-
+4. Install Playwright browsers:
    playwright install
+5. Install and start Redis (required for Celery):
 
-5. **Install Tor** (for .onion scraping):
+- On Ubuntu: `sudo apt-get install redis-server`
+- On macOS: `brew install redis`
+- On Windows: Download and install from https://redis.io/download
 
-   If you wish to scrape .onion sites, make sure Tor is installed and configured. You can download it from [Tor Project](https://www.torproject.org/download/).
+## Running the Application
 
-6. **Configure ScraperAPI**:
+1. Start the Redis server (if not already running):
+   redis-server
 
-   Replace the ScraperAPI key in `settings.py`:
+2. Start the Celery worker:
+   celery -A tasks worker --loglevel=info
 
-   HTTP_PROXY = 'http://YOUR_SCRAPERAPI_KEY@scraperapi.com:8001'
+3. Run the Flask application:
+   python app.py (in the scraper_bot folder)
 
-7. **Run the Scraper**:
+4. Open your web browser and navigate to `http://localhost:5000`
 
-   Use the following command to run the scraper with a specific spider:
+## Usage
 
-   scrapy crawl <spider_name>
+1. Enter your search query
+2. Select the desired search engine
+3. Set the result limit
+4. Choose whether to use Tor for anonymous scraping
+5. Click "Start Search" and wait for the results
 
-   Available spiders:
-   - `google_spider`: for Google searches.
-   - `bing_spider`: for Bing searches.
-   - `keyword_spider`: for DuckDuckGo searches.
-   - `onion_spider`: for .onion site scraping using Tor.
+## Contributing
 
-8. **View Results**:
-
-   Once the scraper is complete, you can view the results on the web interface by visiting `http://localhost:5000` (if using Flask).
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the LICENSE file for details.

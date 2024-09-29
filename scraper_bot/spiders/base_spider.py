@@ -1,34 +1,57 @@
-import scrapy
-from scrapy.exceptions import CloseSpider
-from scraper_bot.utils.proxy_helper import proxy_manager, tor_manager, get_tor_proxy
+import asyncio
+from playwright.async_api import async_playwright
+from scrapy import Spider
+from scrapy.http import Request
+from scrapy.utils.defer import maybe_deferred_to_future
+from urllib.parse import urljoin
 
-class BaseSpider(scrapy.Spider):
-    def __init__(self, query=None, limit=50, use_tor=False, *args, **kwargs):
+class BaseSpider(Spider):
+    name = 'base_spider'
+
+    def __init__(self, query=None, limit=10, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.query = query
         self.limit = int(limit)
-        self.results_fetched = 0
-        self.use_tor = use_tor
         self.results = []
 
-    def get_proxy(self):
-        if self.use_tor:
-            tor_manager.renew_tor_ip()
-            return get_tor_proxy()
-        return proxy_manager.get_random_proxy()
+    async def start_requests(self):
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            
+            url = self.get_search_url()
+            await page.goto(url)
+            
+            while len(self.results) < self.limit:
+                results = await self.parse_results(page)
+                self.results.extend(results[:self.limit - len(self.results)])
+                
+                if len(self.results) < self.limit:
+                    next_page = await self.get_next_page(page)
+                    if not next_page:
+                        break
+                    await page.goto(next_page)
+            
+            await browser.close()
+        
+        for result in self.results:
+            yield Request(url=result['url'], callback=self.parse_item, cb_kwargs={'item': result})
 
-    def parse(self, response):
+    async def parse_results(self, page):
         raise NotImplementedError
 
-    def process_result(self, result):
-        if self.results_fetched < self.limit:
-            self.results.append(result)
-            self.results_fetched += 1
-            yield result
-            if self.results_fetched >= self.limit:
-                raise CloseSpider(f'Reached result limit of {self.limit}')
-        else:
-            raise CloseSpider(f'Reached result limit of {self.limit}')
+    async def get_next_page(self, page):
+        raise NotImplementedError
 
-    def closed(self, reason):
-        self.crawler.stats.set_value('results_fetched', self.results_fetched)
+    def get_search_url(self):
+        raise NotImplementedError
+
+    async def parse_item(self, response, item):
+        yield item
+
+    def parse(self, response):
+        return maybe_deferred_to_future(self._parse(response))
+
+    async def _parse(self, response):
+        async for item in self.parse_item(response):
+            yield item

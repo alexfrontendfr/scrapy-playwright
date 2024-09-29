@@ -1,138 +1,211 @@
-{% extends "base.html" %} {% block content %}
-<h1 class="text-4xl mb-5 text-center">Web Scraper - Terminal Matrix UI</h1>
-
-<form id="searchForm" class="mb-8">
-  <div class="mb-4">
-    <label for="query" class="block mb-2">Enter Search Term:</label>
-    <input
-      type="text"
-      id="query"
-      name="query"
-      required
-      class="w-full p-2 bg-black border border-green-500 text-green-500"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matrix Web Scraper</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
     />
-  </div>
-
-  <div class="mb-4">
-    <label for="engine" class="block mb-2">Select Search Engine:</label>
-    <select
-      id="engine"
-      name="engine"
-      required
-      class="w-full p-2 bg-black border border-green-500 text-green-500"
-    >
-      <option value="google">Google</option>
-      <option value="bing">Bing</option>
-      <option value="duckduckgo">DuckDuckGo</option>
-      <option value="onion">Onion</option>
-      <option value="keyword">Keyword</option>
-    </select>
-  </div>
-
-  <div class="mb-4">
-    <label for="limit" class="block mb-2">Result Limit:</label>
-    <input
-      type="number"
-      id="limit"
-      name="limit"
-      min="1"
-      max="100"
-      value="10"
-      required
-      class="w-full p-2 bg-black border border-green-500 text-green-500"
-    />
-  </div>
-
-  <div class="mb-4">
-    <label class="flex items-center">
-      <input type="checkbox" id="use_tor" name="use_tor" class="mr-2" />
-      <span>Use Tor (for anonymous scraping)</span>
-    </label>
-  </div>
-
-  <button
-    type="submit"
-    class="w-full p-2 bg-green-500 text-black font-bold hover:bg-green-600"
-  >
-    Start Search
-  </button>
-</form>
-
-<div id="statusContainer" class="mt-8 hidden">
-  <h2 class="text-2xl mb-4">Scraping Status</h2>
-  <div class="bg-gray-200 rounded">
-    <div
-      id="progressBar"
-      class="bg-green-500 text-xs leading-none py-1 text-center text-white rounded"
-      style="width: 0%"
-    ></div>
-  </div>
-  <p id="statusText" class="mt-2"></p>
-</div>
-
-<div id="resultsContainer" class="mt-8 hidden">
-  <h2 class="text-2xl mb-4">Search Results</h2>
-  <ul id="resultsList" class="list-disc pl-5"></ul>
-</div>
-
-<script>
-  document
-    .getElementById("searchForm")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      const statusContainer = document.getElementById("statusContainer");
-      const progressBar = document.getElementById("progressBar");
-      const statusText = document.getElementById("statusText");
-      const resultsContainer = document.getElementById("resultsContainer");
-      const resultsList = document.getElementById("resultsList");
-
-      statusContainer.classList.remove("hidden");
-      resultsContainer.classList.add("hidden");
-      resultsList.innerHTML = "";
-
-      fetch("/search", {
-        method: "POST",
-        body: formData,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.status === "success") {
-            checkStatus();
-          }
-        });
-    });
-
-  function checkStatus() {
-    fetch("/status")
-      .then((response) => response.json())
-      .then((data) => {
-        const progressBar = document.getElementById("progressBar");
-        const statusText = document.getElementById("statusText");
-
-        progressBar.style.width = `${data.progress}%`;
-        statusText.textContent = data.is_scraping
-          ? "Scraping in progress..."
-          : "Scraping complete";
-
-        if (data.is_scraping) {
-          setTimeout(checkStatus, 1000);
-        } else {
-          fetchResults();
+    <style>
+      @keyframes matrix-rain {
+        0% {
+          background-position: 0 0;
         }
-      });
-  }
+        100% {
+          background-position: 0 100%;
+        }
+      }
+      .matrix-bg {
+        background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==");
+        background-size: 100% 100%;
+        animation: matrix-rain 20s linear infinite;
+      }
+      .neon-text {
+        text-shadow: 0 0 5px #0f0, 0 0 10px #0f0, 0 0 15px #0f0, 0 0 20px #0f0;
+      }
+      .neon-border {
+        box-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-green-400 min-h-screen flex flex-col">
+    <div
+      class="matrix-bg fixed top-0 left-0 w-full h-full opacity-50 z-0"
+    ></div>
 
-  function fetchResults() {
-    fetch("/results")
-      .then((response) => response.text())
-      .then((html) => {
-        const resultsContainer = document.getElementById("resultsContainer");
-        const resultsList = document.getElementById("resultsList");
+    <div class="bg-black p-4">
+      <h1 class="text-3xl font-bold neon-text text-center">
+        Advanced Web Scraper
+      </h1>
+    </div>
 
-        resultsContainer.classList.remove("hidden");
-        resultsList.innerHTML = html;
+    <div
+      class="flex-grow container mx-auto px-4 py-8 relative z-10"
+      role="main"
+    >
+      <form id="searchForm" class="space-y-4">
+        <div>
+          <label for="query" class="block mb-2">Enter Search Term:</label>
+          <input
+            type="text"
+            id="query"
+            name="query"
+            required
+            class="w-full p-2 bg-gray-800 rounded neon-border"
+          />
+        </div>
+
+        <div>
+          <label class="block mb-2">Select Search Engine:</label>
+          <div class="space-x-4">
+            <label
+              ><input type="checkbox" name="engines" value="google" />
+              Google</label
+            >
+            <label
+              ><input type="checkbox" name="engines" value="bing" /> Bing</label
+            >
+            <label
+              ><input type="checkbox" name="engines" value="duckduckgo" />
+              DuckDuckGo</label
+            >
+            <label
+              ><input type="checkbox" name="engines" value="onion" />
+              Onion</label
+            >
+            <label
+              ><input type="checkbox" name="engines" value="keyword" /> Keyword
+              (Multi-Engine)</label
+            >
+          </div>
+        </div>
+
+        <div>
+          <label for="limit" class="block mb-2">Result Limit:</label>
+          <input
+            type="number"
+            id="limit"
+            name="limit"
+            min="1"
+            max="100"
+            value="10"
+            class="w-full p-2 bg-gray-800 rounded neon-border"
+          />
+        </div>
+
+        <div class="flex items-center">
+          <input type="checkbox" id="useTor" name="use_tor" class="mr-2" />
+          <label for="useTor">Use Tor (for anonymous scraping)</label>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-2 px-4 bg-green-600 hover:bg-green-700 rounded neon-border"
+        >
+          Start Search
+        </button>
+      </form>
+
+      <div id="statusContainer" class="mt-8 hidden">
+        <h2 class="text-2 xl mb-4 neon-text">Scraping Status</h2>
+        <div class="bg-gray-800 rounded-full">
+          <div
+            id="progressBar"
+            class="bg-green-500 text-xs leading-none py-1 text-center text-black rounded-full"
+            style="width: 0%"
+          ></div>
+        </div>
+        <div id="statusText" class="mt-2 text-center"></div>
+      </div>
+    </div>
+    <div id="resultsContainer" class="mt-8 hidden">
+      <h2 class="text-2xl mb-4 neon-text">Search Results</h2>
+      <div id="results" class="space-y-4"></div>
+  </div>
+</div>
+
+<footer class="bg-black p-4 text-center">
+  © 2024 Advanced Web Scraper
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+  $(document).ready(function() {
+      $('#searchForm').on('submit', function(e) {
+          e.preventDefault();
+          var formData = $(this).serialize();
+          
+          $.ajax({
+              url: '/search',
+              method: 'POST',
+              data: formData,
+              dataType: 'json',
+              success: function(response) {
+                  $('#statusContainer').show();
+                  $('#resultsContainer').hide();
+                  $('#results').empty();
+                  
+                  response.task_ids.forEach(function(taskId) {
+                      pollTaskStatus(taskId);
+                  });
+              },
+              error: function(xhr, status, error) {
+                  alert('An error occurred: ' + error);
+              }
+          });
       });
-  }
+
+      function pollTaskStatus(taskId) {
+          $.ajax({
+              url: '/results/' + taskId,
+              method: 'GET',
+              success: function(response) {
+                  updateProgress(response);
+                  
+                  if (response.state === 'SUCCESS') {
+                      displayResults(response.result);
+                  } else if (response.state !== 'FAILURE') {
+                      setTimeout(function() {
+                          pollTaskStatus(taskId);
+                      }, 1000);
+                  } else {
+                      alert('Task failed: ' + response.status);
+                  }
+              },
+              error: function(xhr, status, error) {
+                  alert('An error occurred while fetching results: ' + error);
+              }
+          });
+      }
+
+      function updateProgress(response) {
+          var progress = response.status.match(/(\d+) of (\d+)/);
+          if (progress) {
+              var percentage = (parseInt(progress[1]) / parseInt(progress[2])) * 100;
+              $('#progressBar').css('width', percentage + '%');
+              $('#statusText').text(response.status);
+          }
+      }
+
+      function displayResults(results) {
+          $('#statusContainer').hide();
+          $('#resultsContainer').show();
+          
+          results.forEach(function(result) {
+              var resultHtml = `
+                  <div class="bg-gray-800 p-4 rounded neon-border">
+                      <h3 class="text-xl font-bold mb-2">${result.title}</h3>
+                      <a href="${result.url}" target="_blank" class="text-blue-400 hover:underline">${result.url}</a>
+                      <p class="mt-2">${result.snippet}</p>
+                  </div>
+              `;
+              $('#results').append(resultHtml);
+          });
+      }
+  });
 </script>
-{% endblock %}
+</body>
+</html>
+</antArtifact>
