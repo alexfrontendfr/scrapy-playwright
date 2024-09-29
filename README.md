@@ -18,7 +18,7 @@ This project uses Scrapy and Playwright to perform web scraping across various s
 1. Clone the repository:
 
    ```
-   git clone https://github.com/yourusername/scrapy-playwright.git
+   git clone https://github.com/alexfrontendfr/scrapy-playwright.git
    cd scrapy-playwright
    ```
 
