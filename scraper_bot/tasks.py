@@ -5,11 +5,9 @@ from scraper_bot.spiders.google_spider import GoogleSpider
 from scraper_bot.spiders.bing_spider import BingSpider
 from scraper_bot.spiders.duckduckgo_spider import DuckDuckGoSpider
 from scraper_bot.spiders.onion_spider import OnionSpider
-from scraper_bot.spiders.keyword_spider import KeywordSpider
 from scraper_bot.utils.cache_manager import cache_manager
-from scraper_bot.utils.result_processor import process_results
 
-app = Celery('scraper_bot', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
+app = Celery('scraper_bot', broker=settings.REDIS_URL, backend=settings.REDIS_URL)
 
 @app.task(bind=True)
 def run_spider(self, spider_name, query, limit, use_tor):
@@ -18,7 +16,6 @@ def run_spider(self, spider_name, query, limit, use_tor):
         'bing': BingSpider,
         'duckduckgo': DuckDuckGoSpider,
         'onion': OnionSpider,
-        'keyword': KeywordSpider
     }.get(spider_name)
 
     if not spider_class:
@@ -33,8 +30,7 @@ def run_spider(self, spider_name, query, limit, use_tor):
     process.crawl(spider_class, query=query, limit=limit, use_tor=use_tor)
     process.start()
 
-    results = process_results('output.json')[:limit]
-    cache_manager.cache_results(query, spider_name, results)
+    results = cache_manager.get_cached_results(query, spider_name)[:limit]
 
     for i, _ in enumerate(results):
         self.update_state(state='PROGRESS', meta={'current': i+1, 'total': len(results), 'status': f'Processing result {i+1} of {len(results)}'})

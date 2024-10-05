@@ -11,6 +11,6 @@ class ScraperResult(Base):
     query = Column(String(255))
     engine = Column(String(50))
     title = Column(String(255))
-    url = Column(String(1000))
+    url = Column(Text)
     snippet = Column(Text)
     scraped_at = Column(DateTime, default=datetime.utcnow)

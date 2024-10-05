@@ -10,8 +10,8 @@
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/matrix-web-scraper.git
-   cd matrix-web-scraper
+   git clone https://github.com/alexfrontendfr/scrapy-playwright.git
+   cd scrapy-playwright
    ```
 
 2. Create and activate a virtual environment:

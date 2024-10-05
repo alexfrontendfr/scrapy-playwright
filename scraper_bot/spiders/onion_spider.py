@@ -2,10 +2,10 @@ import scrapy
 from scraper_bot.spiders.base_spider import BaseSpider
 from scrapy_playwright.page import PageMethod
 from scraper_bot.utils.cache_manager import cache_manager
+from scraper_bot.utils.tor_manager import renew_tor_ip, get_tor_proxy
 import json
 from urllib.parse import urljoin
-from stem import Signal
-from stem.control import Controller
+import time
 
 class OnionSpider(BaseSpider):
     name = "onion_spider"
@@ -15,13 +15,15 @@ class OnionSpider(BaseSpider):
         "http://xmh57jrzrnw6insl.onion",  # DuckDuckGo .onion
         "http://zqktlwiuavvvqqt4ybvgvi7tyo4hjl5xgfuvpdf6otjiycgwqbym2qad.onion",  # Torch
         "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion",  # Ahmia
+        "http://haystak5njsmn2hqkewecpaxetahtwhsbsa64jom2k22z5afxhnpxfid.onion",  # Haystak
+        "http://gjobqjj7wyczbqie.onion",  # Candle
     ]
 
     custom_settings = {
         "PLAYWRIGHT_LAUNCH_OPTIONS": {
             "headless": True,
             "proxy": {
-                "server": "socks5://127.0.0.1:9050"
+                "server": get_tor_proxy()
             }
         },
         "RETRY_ENABLED": True,
@@ -30,10 +32,9 @@ class OnionSpider(BaseSpider):
         "ROBOTSTXT_OBEY": False,
     }
 
-    def __init__(self, query=None, limit=10, use_tor=True, *args, **kwargs):
-        super().__init__(query, limit, use_tor, *args, **kwargs)
-        self.tor_controller = Controller.from_port(port=9051)
-        self.tor_controller.authenticate()
+    def __init__(self, query=None, limit=10, *args, **kwargs):
+        super().__init__(query, limit, *args, **kwargs)
+        self.use_tor = True
 
     def start_requests(self):
         cached_results = cache_manager.get_cached_results(self.query, 'onion')
@@ -68,7 +69,7 @@ class OnionSpider(BaseSpider):
         if self.results_fetched < self.limit:
             next_page = response.css('a.next::attr(href)').get()
             if next_page:
-                self.renew_tor_ip()
+                renew_tor_ip()
                 yield scrapy.Request(
                     url=urljoin(response.url, next_page),
                     meta={'playwright': True},
@@ -78,15 +79,11 @@ class OnionSpider(BaseSpider):
         else:
             cache_manager.cache_results(self.query, 'onion', self.results)
 
-    def renew_tor_ip(self):
-        self.tor_controller.signal(Signal.NEWNYM)
-        self.logger.info("New Tor IP requested")
-
     def errback_httpbin(self, failure):
         self.logger.error(f"Error occurred: {failure}")
-
-    def closed(self, reason):
-        super().closed(reason)
-        with open('onion_output.json', 'w') as f:
-            json.dump(self.results, f, indent=4)
-        self.tor_controller.close()
+        if failure.check(scrapy.exceptions.IgnoreRequest):
+            return
+        renew_tor_ip()
+        request = failure.request.copy()
+        request.dont_filter = True
+        yield request

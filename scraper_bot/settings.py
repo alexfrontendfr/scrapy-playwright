@@ -1,34 +1,26 @@
-# Web Scraper settings
+import os
 
-BOT_NAME = 'web_scraper'
+BOT_NAME = 'matrix_web_scraper'
 
-SPIDER_MODULES = ['web_scraper.spiders']
-NEWSPIDER_MODULE = 'web_scraper.spiders'
+SPIDER_MODULES = ['scraper_bot.spiders']
+NEWSPIDER_MODULE = 'scraper_bot.spiders'
 
-# Obey robots.txt rules
 ROBOTSTXT_OBEY = True
-
-# Configure maximum concurrent requests performed by Scrapy
 CONCURRENT_REQUESTS = 32
-
-# Configure a delay for requests for the same website
 DOWNLOAD_DELAY = 0.5
 RANDOMIZE_DOWNLOAD_DELAY = True
 
-# Enable and configure the AutoThrottle extension
 AUTOTHROTTLE_ENABLED = True
 AUTOTHROTTLE_START_DELAY = 5
 AUTOTHROTTLE_MAX_DELAY = 60
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 
-# Enable and configure HTTP caching
 HTTPCACHE_ENABLED = True
 HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = 'httpcache'
 HTTPCACHE_IGNORE_HTTP_CODES = []
 HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-# Playwright settings
 DOWNLOAD_HANDLERS = {
     "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
     "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
@@ -38,33 +30,43 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 
 PLAYWRIGHT_LAUNCH_OPTIONS = {
     "headless": True,
-    "timeout": 20 * 1000,  # 20 seconds
+    "timeout": 20 * 1000,
+    "proxy": {
+        "server": "socks5://127.0.0.1:9050"
+    }
 }
 
-# Custom settings
 SEARCH_CACHE_DIR = 'search_cache'
 SEARCH_CACHE_DURATION = 86400  # 24 hours
 
-# Middleware settings
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
-    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
+    'scraper_bot.middlewares.RandomUserAgentMiddleware': 400,
+    'scraper_bot.middlewares.ProxyMiddleware': 350,
     'scrapy_playwright.middleware.PlaywrightMiddleware': 1000,
 }
 
-# Item pipeline
 ITEM_PIPELINES = {
-    'web_scraper.pipelines.WebScraperPipeline': 300,
+    'scraper_bot.pipelines.WebScraperPipeline': 300,
 }
 
-# Logging settings
 LOG_LEVEL = 'INFO'
 LOG_FILE = 'scraper.log'
 
-# Retry settings
 RETRY_ENABLED = True
 RETRY_TIMES = 3
 RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
 
-# Database settings
-DATABASE_URL = 'sqlite:///scraper_results.db'
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///scraper_results.db')
+
+TOR_PROXY = 'socks5://127.0.0.1:9050'
+TOR_CONTROL_PORT = 9051
+TOR_PASSWORD = os.environ.get('TOR_PASSWORD', '')
+
+USER_AGENT_LIST = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+]
+
+DNS_SERVERS = ['127.0.0.1']

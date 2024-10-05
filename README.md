@@ -1,86 +1,144 @@
-# Matrix Web Scraper
+# Matrix Web Scraper Installation and Running Guide
 
-A powerful and stylish web scraper with a Matrix-inspired UI, capable of scraping various search engines including Google, Bing, DuckDuckGo, and Onion sites.
+## Prerequisites
 
-## Features
+- Debian-based system (e.g., Debian 10 or Ubuntu 20.04)
+- sudo access
 
-- Matrix-themed UI for an immersive experience
-- Support for multiple search engines (Google, Bing, DuckDuckGo, Onion)
-- Tor integration for anonymous scraping
-- Celery task queue for efficient background processing
-- Caching mechanism to store frequently accessed results
-- Real-time progress tracking
-- Downloadable results in JSON format
-- Proxy rotation and user-agent randomization
-- Respect for robots.txt and ethical scraping practices
+## Installation Steps
 
-## Installation
+1. Update system and install dependencies:
 
-1. Clone the repository:
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python3 python3-pip python3-venv tor proxychains4 iptables-persistent dnscrypt-proxy redis-server libpq-dev build-essential libssl-dev libffi-dev python3-dev postgresql postgresql-contrib
+```
 
-   ```
-   git clone https://github.com/yourusername/matrix-web-scraper.git
-   cd matrix-web-scraper
-   ```
+2. Clone the repository:
+   git clone https://github.com/alexfrontendfr/scrapy-playwright.git
+   cd scrapy-playwright
 
-2. Create and activate a virtual environment:
+3. Set up virtual environment:
 
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
+   python3 -m venv venv
+   source venv/bin/activate
 
-3. Install the required dependencies:
+4. Install project dependencies:
 
-   ```
+   pip install --upgrade pip
    pip install -r requirements.txt
-   ```
-
-4. Install Playwright browsers:
-
-   ```
    playwright install
-   ```
 
-5. Install and start Redis (required for Celery):
-   - On Ubuntu: `sudo apt-get install redis-server`
-   - On macOS: `brew install redis`
-   - On Windows: Download and install from https://redis.io/download
+5. Configure TOR
 
-## Running the Application
+   sudo nano /etc/tor/torrc
 
-1. Start the Redis server (if not already running):
+6. Add or uncomment the following lines:
 
-   ```
-   redis-server
-   ```
+SocksPort 9050
+ControlPort 9051
+HashedControlPassword 16:01234567890ABCDEF01234567890ABCDEF01234567890ABCDEF01234567
 
-2. Start the Celery worker:
+Generate a hashed password:
+tor --hash-password "your_password_here"
 
-   ```
+Replace the HashedControlPassword line with the generated hash.
+Restart TOR:
+sudo systemctl restart tor
+
+6. Configure ProxyChains:
+   sudo nano /etc/proxychains4.conf
+
+7. Add the following line at the end of the file:
+   socks5 127.0.0.1 9050
+
+8. Configure firewall:
+
+   Create configure_firewall.sh in the project root and add the content from step 5 in the previous message.
+   Apply firewall rules:
+   sudo bash configure_firewall.sh
+
+9. Configure DNSCrypt-proxy:
+
+   sudo nano /etc/dnscrypt-proxy/dnscrypt-proxy.toml
+
+Update the settings as mentioned in step 6 of the previous message.
+Restart DNSCrypt-proxy:
+
+sudo systemctl restart dnscrypt-proxy
+
+Update the settings as mentioned in step 6 of the previous message.
+Restart DNSCrypt-proxy:
+sudo systemctl restart dnscrypt-proxy
+
+Update resolv.conf:
+echo "nameserver 127.0.0.1" | sudo tee /etc/resolv.conf
+echo "options edns0" | sudo tee -a /etc/resolv.conf
+
+9. Set up PostgreSQL:
+   sudo -u postgres psql -c "CREATE DATABASE matrix_scraper;"
+   sudo -u postgres psql -c "CREATE USER scraper_user WITH PASSWORD 'your_password';"
+   sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE matrix_scraper TO scraper_user;"
+
+10. Configure environment variables:
+
+Create a .env file in the project root:
+
+11. Initialize the database:
+
+python
+
+12. In the Python interpreter:
+
+from scraper_bot.models import Base
+from sqlalchemy import create_engine
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+engine = create_engine(os.getenv('DATABASE_URL'))
+Base.metadata.create_all(engine)
+
+exit()
+
+Running the Project
+
+1. Start Redis server:
+   sudo systemctl start redis-server
+
+2. Start Celery worker:
+
    celery -A scraper_bot.tasks worker --loglevel=info
-   ```
 
 3. Run the Flask application:
 
-   ```
    python scraper_bot/app.py
-   ```
 
-4. Open your web browser and navigate to `http://localhost:5000`
+4. Access the web interface:
 
-## Usage
+Open a web browser and navigate to http://localhost:5000
+Usage
 
-1. Enter your search query
-2. Select the desired search engine(s)
-3. Set the result limit
-4. Choose whether to use Tor for anonymous scraping
-5. Click "Start Search" and wait for the results
+Enter your search query in the provided field.
+Select the desired search engines (Google, Bing, DuckDuckGo, Onion).
+Set the result limit.
+Choose whether to use TOR for anonymous scraping.
+Click "Start Search" and wait for the results.
 
-## Contributing
+Maintenance
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+To clear the cache: Send a POST request to http://localhost:5000/clear_cache
+To renew the TOR IP: Send a POST request to http://localhost:5000/renew_tor_ip
 
-## License
+Troubleshooting
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+If you encounter any issues with TOR, try restarting the service
+
+sudo systemctl restart tor
+
+If the database connection fails, ensure PostgreSQL is running:
+
+sudo systemctl status postgresql
+
+For any other issues, check the scraper.log file for error messages.

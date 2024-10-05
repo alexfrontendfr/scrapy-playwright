@@ -1,24 +1,15 @@
-import os
-import sys
-
-# Add the project root directory to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, project_root)
+# scraper_bot/app.py
 
 from flask import Flask, render_template, request, jsonify
-from scraper_bot.spiders.google_spider import GoogleSpider
-from scraper_bot.spiders.bing_spider import BingSpider
-from scraper_bot.spiders.duckduckgo_spider import DuckDuckGoSpider
-from scraper_bot.spiders.onion_spider import OnionSpider
-from scraper_bot.spiders.keyword_spider import KeywordSpider
 from scraper_bot.tasks import run_spider
 from scraper_bot.utils.cache_manager import cache_manager
-from scraper_bot.utils.proxy_helper import tor_manager
+from scraper_bot.utils.tor_manager import renew_tor_ip
 import logging
+from celery.result import AsyncResult
 
 app = Flask(__name__)
+app.config.from_object('scraper_bot.settings')
 
-# Configure logging
 logging.basicConfig(filename='scraper.log', level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -49,7 +40,7 @@ def search():
 
 @app.route('/results/<task_id>')
 def get_results(task_id):
-    task = run_spider.AsyncResult(task_id)
+    task = AsyncResult(task_id)
     if task.state == 'PENDING':
         response = {
             'state': task.state,
@@ -60,8 +51,8 @@ def get_results(task_id):
             'state': task.state,
             'status': task.info.get('status', '')
         }
-        if 'result' in task.info:
-            response['result'] = task.info['result']
+        if task.state == 'SUCCESS':
+            response['result'] = task.result
     else:
         response = {
             'state': task.state,
@@ -74,13 +65,10 @@ def clear_cache():
     cache_manager.clear_expired_cache()
     return jsonify({'status': 'Cache cleared successfully'})
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template('500.html'), 500
+@app.route('/renew_tor_ip', methods=['POST'])
+def renew_tor_ip_route():
+    renew_tor_ip()
+    return jsonify({'status': 'Tor IP renewed successfully'})
 
 if __name__ == '__main__':
     app.run(debug=False)
