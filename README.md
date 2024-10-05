@@ -14,7 +14,11 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y git python3 python3-pip python3-venv tor proxychains4 iptables-persistent dnscrypt-proxy redis-server libpq-dev build-essential libssl-dev libffi-dev python3-dev postgresql postgresql-contrib
 ```
 
+<<<<<<< HEAD
 2. Clone the repository:
+=======
+   ```
+>>>>>>> origin/main
    git clone https://github.com/alexfrontendfr/scrapy-playwright.git
    cd scrapy-playwright
 
